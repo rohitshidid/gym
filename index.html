@@ -126,6 +126,31 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* live gym open/closed status */
+  .gym-status {
+    flex: none; display: flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap;
+    padding: 7px 12px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line);
+  }
+  .gym-status .dot {
+    width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--muted);
+  }
+  .gym-status.open   { color: #2e8b57; border-color: color-mix(in srgb, #2e8b57 40%, var(--line)); }
+  .gym-status.open   .dot { background: #2e8b57; }
+  .gym-status.soon   { color: #c97013; border-color: color-mix(in srgb, #c97013 45%, var(--line)); }
+  .gym-status.soon   .dot { background: #c97013; animation: pulse 1.8s ease-in-out infinite; }
+  .gym-status.closed .dot { background: var(--muted); opacity: .55; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  :root[data-theme="dark"] .gym-status.open, :root[data-theme="dark"] .gym-status.open .dot { color: #74d69b; }
+  :root[data-theme="dark"] .gym-status.open .dot { background: #74d69b; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .gym-status.open { color: #74d69b; }
+    :root:not([data-theme="light"]) .gym-status.open .dot { background: #74d69b; }
+    :root:not([data-theme="light"]) .gym-status.soon { color: #f0b45a; }
+    :root:not([data-theme="light"]) .gym-status.soon .dot { background: #f0b45a; }
+  }
+
   /* ---------- day cards ---------- */
   .days { display: flex; flex-direction: column; gap: 12px; }
   .day {
@@ -149,6 +174,14 @@
   .day-name { display: block; font-weight: 700; font-size: 17px; color: var(--day); }
   .num { display: block; font-size: 10.5px; color: var(--muted); font-weight: 700; letter-spacing: .07em; }
   .day.today .num::after { content: " · TODAY"; color: var(--day); }
+
+  .hours {
+    flex: none; font-size: 11.5px; font-weight: 700; color: var(--muted);
+    white-space: nowrap; letter-spacing: .01em;
+  }
+  .hours .clk { margin-right: 4px; opacity: .75; }
+  /* days the gym shuts early are worth spotting at a glance */
+  .day.short-hours .hours { color: var(--day); }
 
   .peek { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); transition: opacity .2s ease; }
   .peek-ex { font-weight: 700; color: var(--fg); }
@@ -279,6 +312,9 @@
   .shop-card.open .day-head .caret { transform: rotate(90deg); }
   .shop-card .day-head { gap: 12px; }
   .shop-count { flex: none; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .ref-card { margin-top: 22px; }
+  .ref-strip { padding: 14px 16px 18px; margin-bottom: 0; }
+  .ref-strip .chip { box-shadow: none; }
   .buy-list { list-style: none; margin: 0; padding: 4px 0 6px; }
   .buy-list li { border-top: 1px solid var(--line); }
   .buy-list li:first-child { border-top: none; }
@@ -325,9 +361,15 @@
     .workout.open > .detail { padding: 4px 15px 18px; }
 
     .daybar { margin: 0 -12px 12px; padding: 7px 10px; }
-    .daybar-inner { gap: 4px; }
+    .daybar-inner { gap: 4px; flex-wrap: wrap; }
     .pill { padding: 8px 2px 9px; border-radius: 11px; }
     .theme-btn { width: 34px; height: 34px; }
+    /* status drops to its own slim line under the pills */
+    .gym-status { order: 3; flex-basis: 100%; justify-content: center; padding: 5px 10px; margin-top: 1px; }
+
+    /* title row: name (grows) | hours | batch badge — summary drops below */
+    .hours { order: 1; font-size: 10.5px; }
+    .day-name { white-space: nowrap; }
 
     .buy { padding: 13px 15px; font-size: 15px; }
     .buy .tick { width: 26px; height: 26px; line-height: 24px; }
@@ -350,8 +392,10 @@
   }
   @media (max-width: 380px) {
     .day-name { font-size: 17px; }
-    .day-head { gap: 9px; }
+    .day-head { gap: 8px; }
     .peek-food { display: none; }
+    .hours { font-size: 9.5px; }
+    .hours .clk { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .day-body, .workout, .workout > .detail, .caret { transition: none; }
@@ -392,6 +436,7 @@
       <button class="pill" data-jump="5" style="--pday:#8256cf"><span class="letter">F</span><span class="sub">Legs</span></button>
       <button class="pill" data-jump="6" style="--pday:#d1467f"><span class="letter">S</span><span class="sub">Pull</span></button>
       <button class="pill" data-jump="7" style="--pday:#17a9a0"><span class="letter">S</span><span class="sub">Run</span></button>
+      <span class="gym-status" id="gym-status" role="status"><span class="dot"></span><span class="txt">—</span></span>
       <button class="theme-btn" id="theme" aria-label="Switch between light and dark">🌙</button>
     </div>
   </nav>
@@ -859,18 +904,24 @@
     </section>
   </div>
 
-  <div class="strip" style="margin-top:26px">
+  <section class="shop-card ref-card" style="--day:#8a8078">
+    <button class="day-head">
+      <span class="caret">▶</span>
+      <span class="day-id"><span class="day-name">How it works</span><span class="num">REFERENCE</span></span>
+      <span class="peek"><span class="peek-ex">Cook sessions · balance rule · storage</span><span class="peek-food">7 notes — read once, then collapse</span></span>
+    </button>
+    <div class="day-body"><div class="day-inner">
+      <div class="strip ref-strip">
     <div class="chip"><b><span class="ico">🍳</span>3 cook sessions</b>Sun → Sun·Mon·Tue &nbsp;•&nbsp; Wed → Wed·Thu &nbsp;•&nbsp; Fri → Fri·Sat</div>
     <div class="chip"><b><span class="ico">🥗</span>Balance rule</b>One veg meal + one meat/fish/egg meal every single day</div>
     <div class="chip"><b><span class="ico">🦵</span>Leg days</b>Wednesday &amp; Friday — never Saturday or Monday, so Sunday's run is fresh</div>
     <div class="chip"><b><span class="ico">🥣</span>Granola</b>That's breakfast — deliberately not in this table</div>
-  </div>
-
-  <div class="strip" style="margin-top:24px">
     <div class="chip"><b><span class="ico">📈</span>Weight gain basics</b>Eat ~300–500 kcal above maintenance. 1.6–2 g protein per kg bodyweight. Weigh yourself once a week, same morning. Target 0.25–0.5 kg per week — faster is mostly fat.</div>
     <div class="chip"><b><span class="ico">🥦</span>Vitamins covered</b>Spinach (iron, K, folate) · salmon (omega-3, D, B12) · eggs (choline, B12) · beans &amp; lentils (fibre, magnesium, plant protein) · fruit &amp; dry fruit (C, potassium) · paneer &amp; curd (calcium)</div>
     <div class="chip"><b><span class="ico">🧊</span>3-day storage</b>Batch A stretches to Tuesday. Cool it fast, fridge below 4 °C, and freeze Tuesday's box on Sunday if you want zero risk — thaw it Monday night.</div>
-  </div>
+      </div>
+    </div></div>
+  </section>
 
 </div>
 
@@ -897,6 +948,10 @@
   }
 
   var SLUGS = ['', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+  /* gym opening hours, [open, close] in 24h — index 1 = Monday … 7 = Sunday */
+  var HOURS = { 1: [5, 23], 2: [5, 23], 3: [5, 23], 4: [5, 23], 5: [5, 22], 6: [7, 19], 7: [7, 19] };
+  function clock(h) { return (h % 12 || 12) + (h < 12 ? ' AM' : ' PM'); }
   var days = Array.prototype.slice.call(document.querySelectorAll('.day'));
   var pills = Array.prototype.slice.call(document.querySelectorAll('.pill'));
 
@@ -918,6 +973,44 @@
     paintThemeIcon();
   });
   paintThemeIcon();
+
+  /* ---------------- gym hours ---------------- */
+  days.forEach(function (card) {
+    var n = +card.getAttribute('data-day');
+    var span = document.createElement('span');
+    span.className = 'hours';
+    span.innerHTML = '<span class="clk">🕔</span>' + clock(HOURS[n][0]) + '–' + clock(HOURS[n][1]);
+    span.title = 'Gym opening hours';
+    if (HOURS[n][1] <= 20) card.classList.add('short-hours');   // early closing days
+    card.querySelector('.day-id').insertAdjacentElement('afterend', span);
+  });
+
+  var statusEl = document.getElementById('gym-status');
+  function paintStatus() {
+    var now = new Date();
+    var n = now.getDay() || 7;
+    var mins = now.getHours() * 60 + now.getMinutes();
+    var open = HOURS[n][0] * 60, close = HOURS[n][1] * 60;
+    var cls, txt;
+
+    if (mins < open) {
+      cls = 'closed'; txt = 'Closed · opens ' + clock(HOURS[n][0]);
+    } else if (mins >= close) {
+      var next = (n % 7) + 1;                                   // tomorrow
+      cls = 'closed'; txt = 'Closed · opens ' + clock(HOURS[next][0]) + ' tomorrow';
+    } else if (close - mins <= 60) {
+      cls = 'soon'; txt = (close - mins) + ' min left';
+    } else {
+      cls = 'open'; txt = 'Open · closes ' + clock(HOURS[n][1]);
+    }
+    statusEl.className = 'gym-status ' + cls;
+    statusEl.querySelector('.txt').textContent = txt;
+  }
+  paintStatus();
+  setInterval(paintStatus, 60000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) paintStatus();                        // phone woke from sleep
+  });
 
   /* ---------------- set tracker ---------------- */
   var setState = load('sets', null);
@@ -1128,6 +1221,7 @@
     var items = Array.prototype.slice.call(card.querySelectorAll('.buy'));
 
     function refresh() {
+      if (!count) return;
       var left = items.filter(function (b) { return !b.classList.contains('got'); }).length;
       count.textContent = left ? left + ' left' : '✓ done';
     }
@@ -1147,20 +1241,22 @@
       });
     });
 
-    var clear = document.createElement('button');
-    clear.className = 'reset-sets';
-    clear.style.margin = '4px 0 16px 18px';
-    clear.textContent = '↺ Clear ticks';
-    clear.addEventListener('click', function () {
-      items.forEach(function (b) {
-        b.classList.remove('got');
-        b.setAttribute('aria-pressed', 'false');
-        delete bought[group + ':' + b.querySelector('.item').textContent.trim()];
+    if (items.length) {
+      var clear = document.createElement('button');
+      clear.className = 'reset-sets';
+      clear.style.margin = '4px 0 16px 18px';
+      clear.textContent = '↺ Clear ticks';
+      clear.addEventListener('click', function () {
+        items.forEach(function (b) {
+          b.classList.remove('got');
+          b.setAttribute('aria-pressed', 'false');
+          delete bought[group + ':' + b.querySelector('.item').textContent.trim()];
+        });
+        save('bought', bought);
+        refresh();
       });
-      save('bought', bought);
-      refresh();
-    });
-    card.querySelector('.day-inner').appendChild(clear);
+      card.querySelector('.day-inner').appendChild(clear);
+    }
 
     head.setAttribute('aria-expanded', 'false');
     head.addEventListener('click', function () {
