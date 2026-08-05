@@ -300,11 +300,13 @@
   /* ---------- MOBILE ---------- */
   @media (max-width: 820px) {
     body { padding: 0 12px 56px; }
-    .hero { margin: 16px 0 18px; padding: 22px 20px; border-radius: 16px; }
-    .hero h1 { font-size: 22px; }
-    .hero p { font-size: 13.5px; }
-    .hero .emojis { font-size: 25px; }
+    .hero { margin: 12px 0 14px; padding: 18px 17px; border-radius: 14px; }
+    .hero h1 { font-size: 20px; }
+    .hero p { font-size: 13px; }
+    .hero .emojis { font-size: 21px; margin-top: 10px; letter-spacing: 2px; }
     .strip { grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
+    /* an open day doesn't need its own summary repeated back at it */
+    .day.open .peek { display: none; }
 
     .days { gap: 10px; }
     .day { border-left-width: 5px; }
@@ -1183,9 +1185,20 @@
   var todayPill = document.querySelector('.pill[data-jump="' + todayN + '"]');
   if (todayPill) todayPill.classList.add('today');
 
+  try { history.scrollRestoration = 'manual'; } catch (e) {}
+
   var hash = (location.hash || '').replace('#', '');
-  if (SLUGS.indexOf(hash) > 0) { atRoot = false; render(hash, true); }
-  else render(SLUGS[todayN], false);
+  if (SLUGS.indexOf(hash) > 0) {
+    atRoot = false;
+    render(hash, false);
+    // the browser resets scroll after load, so jump once everything has settled
+    var landOn = document.querySelector('.day[data-day="' + SLUGS.indexOf(hash) + '"]');
+    window.addEventListener('load', function () {
+      setTimeout(function () { landOn.scrollIntoView({ block: 'start' }); }, 0);
+    });
+  } else {
+    render(SLUGS[todayN], false);
+  }
 })();
 </script>
 </body>
