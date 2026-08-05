@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Weekly Plan — Meal Prep + Gym</title>
+<meta name="theme-color" content="#f2637f">
+<script>
+  // set the theme before first paint so there is no flash
+  try {
+    var t = localStorage.getItem('theme');
+    if (t) document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
 <style>
   :root {
     --bg: #fffbf5;
@@ -22,8 +30,9 @@
     --fish-bg: #e4f2fb;
     --shadow: 0 1px 2px rgba(60,40,20,.06), 0 4px 14px rgba(60,40,20,.05);
   }
+  /* dark palette — applied by system preference, or forced by the theme toggle */
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --bg: #14161a;
       --fg: #ecebe8;
       --muted: #9c968f;
@@ -36,6 +45,19 @@
       --fish: #74bdec;  --fish-bg: #12283a;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
     }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a;
+    --fg: #ecebe8;
+    --muted: #9c968f;
+    --line: #2d3037;
+    --card: #1b1e23;
+    --panel: #191c21;
+    --veg: #74d69b;   --veg-bg: #17301f;
+    --meat: #f0977a;  --meat-bg: #331d16;
+    --egg: #f0c35a;   --egg-bg: #322611;
+    --fish: #74bdec;  --fish-bg: #12283a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
   }
   * { box-sizing: border-box; -webkit-text-size-adjust: 100%; }
   body {
@@ -72,11 +94,43 @@
   .chip b { color: var(--fg); display: block; font-size: 12.5px; margin-bottom: 3px; }
   .chip .ico { font-size: 18px; margin-right: 6px; }
 
+  /* ---------- sticky day bar ---------- */
+  .daybar {
+    position: sticky; top: 0; z-index: 30; margin: 0 -20px 14px; padding: 8px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid transparent; transition: border-color .2s ease;
+  }
+  .daybar.stuck { border-bottom-color: var(--line); }
+  .daybar-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 6px; }
+  .pill {
+    flex: 1; min-width: 0; position: relative; font: inherit; cursor: pointer;
+    background: var(--card); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 12px; padding: 7px 4px 8px; text-align: center; line-height: 1.15;
+    -webkit-tap-highlight-color: transparent; transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .pill .letter { display: block; font-size: 15px; font-weight: 800; letter-spacing: .02em; }
+  .pill .sub { display: block; font-size: 8.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .75; }
+  .pill.today { border-color: color-mix(in srgb, var(--pday) 55%, var(--line)); color: var(--pday); }
+  .pill.active { background: var(--pday); border-color: var(--pday); color: #fff; }
+  .pill.active .sub { opacity: .85; }
+  .pill.done::after {
+    content: "✓"; position: absolute; top: -5px; right: -3px; width: 15px; height: 15px;
+    font-size: 9px; line-height: 15px; font-weight: 800; border-radius: 50%;
+    background: var(--pday); color: #fff; box-shadow: 0 0 0 2px var(--bg);
+  }
+  .pill.active.done::after { background: var(--card); color: var(--pday); }
+  .theme-btn {
+    flex: none; width: 38px; height: 38px; font-size: 16px; line-height: 1; cursor: pointer;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; color: var(--fg);
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* ---------- day cards ---------- */
   .days { display: flex; flex-direction: column; gap: 12px; }
   .day {
     background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--day);
-    border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; scroll-margin-top: 12px;
+    border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; scroll-margin-top: 66px;
   }
 
   .day-head {
@@ -180,6 +234,69 @@
   .tip b { color: var(--fg); }
   .tip .ico { font-size: 16px; margin-right: 5px; }
 
+  /* ---------- pinned meal variants ---------- */
+  .dish .pinned { font-size: 11px; margin-right: 4px; opacity: .75; }
+  .alts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .alt-chip {
+    font: inherit; font-size: 12.5px; line-height: 1.3; cursor: pointer; text-align: left;
+    color: var(--muted); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 11px; -webkit-tap-highlight-color: transparent;
+    transition: background .14s ease, color .14s ease, border-color .14s ease;
+  }
+  .alt-chip:hover { color: var(--fg); border-color: color-mix(in srgb, var(--day) 45%, var(--line)); }
+  .alt-chip em { color: var(--meat); font-style: normal; font-weight: 600; }
+  .alt-chip.reset { border-style: dashed; }
+
+  /* ---------- set tracker ---------- */
+  .sets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .set-box {
+    width: 34px; height: 34px; flex: none; font: inherit; font-size: 12px; font-weight: 700;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    background: var(--panel); color: var(--muted);
+    border: 1.5px solid var(--line); border-radius: 10px;
+    transition: background .13s ease, color .13s ease, border-color .13s ease, transform .13s ease;
+  }
+  .set-box:active { transform: scale(.9); }
+  .set-box.done { background: var(--day); border-color: var(--day); color: #fff; }
+  .ex .prog { font-weight: 700; color: var(--day); }
+  .reset-sets {
+    font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 14px;
+    color: var(--muted); background: none; border: 1px dashed var(--line);
+    border-radius: 10px; padding: 8px 13px; -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---------- shopping list ---------- */
+  .shop { margin-top: 26px; }
+  .shop > h2 {
+    margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted);
+  }
+  .shop-card {
+    background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--day);
+    border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
+    scroll-margin-top: 66px; margin-bottom: 10px;
+  }
+  .shop-card.open .day-body { grid-template-rows: 1fr; }
+  .shop-card.open .day-head .caret { transform: rotate(90deg); }
+  .shop-card .day-head { gap: 12px; }
+  .shop-count { flex: none; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .buy-list { list-style: none; margin: 0; padding: 4px 0 6px; }
+  .buy-list li { border-top: 1px solid var(--line); }
+  .buy-list li:first-child { border-top: none; }
+  .buy {
+    display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align: left;
+    font: inherit; font-size: 14.5px; color: var(--fg); background: none; border: none;
+    padding: 12px 18px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .buy .tick {
+    flex: none; width: 24px; height: 24px; margin-top: 1px; border-radius: 8px;
+    border: 1.5px solid var(--line); background: var(--panel);
+    font-size: 12px; line-height: 22px; text-align: center; color: transparent;
+    transition: background .13s ease, border-color .13s ease, color .13s ease;
+  }
+  .buy .qty { margin-left: auto; flex: none; color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .buy.got .tick { background: var(--day); border-color: var(--day); color: #fff; }
+  .buy.got .item, .buy.got .qty { text-decoration: line-through; opacity: .45; }
+
   /* ---------- MOBILE ---------- */
   @media (max-width: 820px) {
     body { padding: 0 12px 56px; }
@@ -204,6 +321,16 @@
 
     .workout > .detail { padding: 0 15px; }
     .workout.open > .detail { padding: 4px 15px 18px; }
+
+    .daybar { margin: 0 -12px 12px; padding: 7px 10px; }
+    .daybar-inner { gap: 4px; }
+    .pill { padding: 8px 2px 9px; border-radius: 11px; }
+    .theme-btn { width: 34px; height: 34px; }
+
+    .buy { padding: 13px 15px; font-size: 15px; }
+    .buy .tick { width: 26px; height: 26px; line-height: 24px; }
+    .set-box { width: 38px; height: 38px; }
+
     table.work { display: block; }
     table.work tbody, table.work tr, table.work td { display: block; width: 100%; }
     table.work thead { position: absolute; left: -9999px; }
@@ -227,6 +354,22 @@
   @media (prefers-reduced-motion: reduce) {
     .day-body, .workout, .workout > .detail, .caret { transition: none; }
   }
+
+  /* ---------- PRINT — expand everything, one page per day where possible ---------- */
+  @media print {
+    body { padding: 0; background: #fff; color: #000; }
+    .daybar, .caret, .reset-sets, .alts, .theme-btn { display: none !important; }
+    .hero { background: none !important; color: #000; box-shadow: none; padding: 0 0 12px; border-bottom: 2px solid #000; }
+    .hero::after { display: none; }
+    .day-body, .workout { display: block !important; }
+    .day-inner, .workout > .detail { overflow: visible !important; }
+    .workout > .detail { padding: 4px 14px 14px !important; }
+    .day { break-inside: avoid; page-break-inside: avoid; box-shadow: none; margin-bottom: 10px; }
+    .peek { display: none; }
+    .cells { grid-template-columns: 1fr 1fr .8fr; }
+    .cell.exercise { display: none; }
+    .set-box { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -244,6 +387,19 @@
     <div class="chip"><b><span class="ico">🦵</span>Leg days</b>Wednesday &amp; Friday — never Saturday or Monday, so Sunday's run is fresh</div>
     <div class="chip"><b><span class="ico">🥣</span>Granola</b>That's breakfast — deliberately not in this table</div>
   </div>
+
+  <nav class="daybar" aria-label="Jump to a day">
+    <div class="daybar-inner">
+      <button class="pill" data-jump="1" style="--pday:#e0553f"><span class="letter">M</span><span class="sub">Push</span></button>
+      <button class="pill" data-jump="2" style="--pday:#e8912f"><span class="letter">T</span><span class="sub">Pull</span></button>
+      <button class="pill" data-jump="3" style="--pday:#3f9e5f"><span class="letter">W</span><span class="sub">Legs</span></button>
+      <button class="pill" data-jump="4" style="--pday:#3a86c8"><span class="letter">T</span><span class="sub">Push</span></button>
+      <button class="pill" data-jump="5" style="--pday:#8256cf"><span class="letter">F</span><span class="sub">Legs</span></button>
+      <button class="pill" data-jump="6" style="--pday:#d1467f"><span class="letter">S</span><span class="sub">Pull</span></button>
+      <button class="pill" data-jump="7" style="--pday:#17a9a0"><span class="letter">S</span><span class="sub">Run</span></button>
+      <button class="theme-btn" id="theme" aria-label="Switch between light and dark">🌙</button>
+    </div>
+  </nav>
 
   <div class="days">
 
@@ -614,6 +770,100 @@
 
   </div>
 
+  <div class="shop">
+    <h2>🛒 Shopping list</h2>
+
+    <section class="shop-card" data-shop="a" style="--day:#17a9a0">
+      <button class="day-head">
+        <span class="caret">▶</span>
+        <span class="day-id"><span class="day-name">Batch A</span><span class="num">SUNDAY COOK</span></span>
+        <span class="peek"><span class="peek-ex">Chicken &amp; rice · Rajma</span><span class="peek-food">Covers Sun · Mon · Tue</span></span>
+        <span class="shop-count"></span>
+      </button>
+      <div class="day-body"><div class="day-inner">
+        <ul class="buy-list">
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Chicken thighs, boneless</span><span class="qty">1.6 kg</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Basmati rice (dry)</span><span class="qty">3 cups</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Broccoli</span><span class="qty">1 large head</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Carrots</span><span class="qty">4</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Kidney beans (rajma), dry</span><span class="qty">400 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Onions</span><span class="qty">3</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Tomatoes</span><span class="qty">4</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Lemons</span><span class="qty">3</span></button></li>
+        </ul>
+      </div></div>
+    </section>
+
+    <section class="shop-card" data-shop="b" style="--day:#3f9e5f">
+      <button class="day-head">
+        <span class="caret">▶</span>
+        <span class="day-id"><span class="day-name">Batch B</span><span class="num">WEDNESDAY COOK</span></span>
+        <span class="peek"><span class="peek-ex">Palak paneer · Salmon</span><span class="peek-food">Covers Wed · Thu</span></span>
+        <span class="shop-count"></span>
+      </button>
+      <div class="day-body"><div class="day-inner">
+        <ul class="buy-list">
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Spinach (fresh or frozen)</span><span class="qty">800 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Paneer</span><span class="qty">400 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Salmon fillets</span><span class="qty">4 (~500 g)</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Potatoes</span><span class="qty">800 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Basmati rice (dry)</span><span class="qty">1½ cups</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Single cream or whole milk</span><span class="qty">200 ml</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Cumin seeds</span><span class="qty">check jar</span></button></li>
+        </ul>
+      </div></div>
+    </section>
+
+    <section class="shop-card" data-shop="c" style="--day:#8256cf">
+      <button class="day-head">
+        <span class="caret">▶</span>
+        <span class="day-id"><span class="day-name">Batch C</span><span class="num">FRIDAY COOK</span></span>
+        <span class="peek"><span class="peek-ex">Chicken keema · Egg bhurji</span><span class="peek-food">Covers Fri · Sat</span></span>
+        <span class="shop-count"></span>
+      </button>
+      <div class="day-body"><div class="day-inner">
+        <ul class="buy-list">
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Chicken mince</span><span class="qty">700 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">White beans or chickpeas, tinned</span><span class="qty">1 tin</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Basmati rice (dry)</span><span class="qty">1½ cups</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Roti / chapati flour</span><span class="qty">or 6 rotis</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Spinach</span><span class="qty">300 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Bread</span><span class="qty">1 loaf</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Onions</span><span class="qty">2</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Tomatoes</span><span class="qty">3</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Green chillies</span><span class="qty">small pack</span></button></li>
+        </ul>
+      </div></div>
+    </section>
+
+    <section class="shop-card" data-shop="week" style="--day:#e8912f">
+      <button class="day-head">
+        <span class="caret">▶</span>
+        <span class="day-id"><span class="day-name">Every week</span><span class="num">STAPLES</span></span>
+        <span class="peek"><span class="peek-ex">Snacks, breakfast, basics</span><span class="peek-food">Buy once, lasts the week</span></span>
+        <span class="shop-count"></span>
+      </button>
+      <div class="day-body"><div class="day-inner">
+        <ul class="buy-list">
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Eggs</span><span class="qty">18</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Bananas</span><span class="qty">12</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Apples &amp; oranges</span><span class="qty">3 each</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Berries or mango</span><span class="qty">1 pack</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Mixed nuts (almond, walnut, cashew, pistachio)</span><span class="qty">500 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Dates, dried apricots, figs, raisins</span><span class="qty">400 g</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Peanut butter</span><span class="qty">1 jar</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Granola</span><span class="qty">1 kg</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Milk</span><span class="qty">4 L</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Curd / yoghurt</span><span class="qty">1 kg</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Protein powder</span><span class="qty">check tub</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Ghee</span><span class="qty">check jar</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Dark chocolate</span><span class="qty">1 bar</span></button></li>
+          <li><button class="buy"><span class="tick">✓</span><span class="item">Garlic, ginger, hot sauce</span><span class="qty">top up</span></button></li>
+        </ul>
+      </div></div>
+    </section>
+  </div>
+
   <div class="strip" style="margin-top:24px">
     <div class="chip"><b><span class="ico">📈</span>Weight gain basics</b>Eat ~300–500 kcal above maintenance. 1.6–2 g protein per kg bodyweight. Weigh yourself once a week, same morning. Target 0.25–0.5 kg per week — faster is mostly fat.</div>
     <div class="chip"><b><span class="ico">🥦</span>Vitamins covered</b>Spinach (iron, K, folate) · salmon (omega-3, D, B12) · eggs (choline, B12) · beans &amp; lentils (fibre, magnesium, plant protein) · fruit &amp; dry fruit (C, potassium) · paneer &amp; curd (calcium)</div>
@@ -623,30 +873,238 @@
 </div>
 
 <script>
-  var days = Array.prototype.slice.call(document.querySelectorAll('.day'));
+(function () {
+  'use strict';
 
-  function setDay(card, open) {
+  /* ---------------- storage (degrades to memory if blocked) ---------------- */
+  var mem = {};
+  function load(key, fallback) {
+    try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch (e) { return key in mem ? mem[key] : fallback; }
+  }
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); }
+    catch (e) { mem[key] = value; }
+  }
+
+  /* Monday of the current week — used to auto-clear ticked sets each week */
+  function weekId() {
+    var d = new Date(), t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    t.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+    return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate();
+  }
+
+  var SLUGS = ['', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  var days = Array.prototype.slice.call(document.querySelectorAll('.day'));
+  var pills = Array.prototype.slice.call(document.querySelectorAll('.pill'));
+
+  /* ---------------- theme ---------------- */
+  var themeBtn = document.getElementById('theme');
+  function paintThemeIcon() {
+    var forced = document.documentElement.getAttribute('data-theme');
+    var dark = forced ? forced === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    themeBtn.textContent = dark ? '☀️' : '🌙';
+  }
+  themeBtn.addEventListener('click', function () {
+    var forced = document.documentElement.getAttribute('data-theme');
+    var dark = forced ? forced === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = dark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', JSON.stringify(next).slice(1, -1)); } catch (e) {}
+    paintThemeIcon();
+  });
+  paintThemeIcon();
+
+  /* ---------------- set tracker ---------------- */
+  var setState = load('sets', null);
+  if (!setState || setState.week !== weekId()) setState = { week: weekId(), done: {} };
+
+  function saveSets() { setState.week = weekId(); save('sets', setState); }
+
+  function dayTotals(n) {
+    var total = 0, done = 0;
+    document.querySelectorAll('.workout[data-detail="' + n + '"] .set-box').forEach(function (b) {
+      total++;
+      if (b.classList.contains('done')) done++;
+    });
+    return { total: total, done: done };
+  }
+
+  function refreshProgress(n) {
+    var t = dayTotals(n);
+    var prog = document.querySelector('.ex[data-target="' + n + '"] .prog');
+    if (prog) prog.textContent = t.total ? ' · ' + t.done + '/' + t.total + ' sets' : '';
+    var pill = document.querySelector('.pill[data-jump="' + n + '"]');
+    if (pill) pill.classList.toggle('done', t.total > 0 && t.done === t.total);
+  }
+
+  days.forEach(function (card) {
+    var n = card.getAttribute('data-day');
+    var panel = card.querySelector('.workout');
+
+    panel.querySelectorAll('table.work tbody tr').forEach(function (row, exIdx) {
+      var cell = row.children[1];
+      if (!cell) return;
+      var m = /^\s*(\d+)\s*×/.exec(cell.textContent);   // "4 × 6–8" → 4 sets
+      if (!m) return;                                   // Sunday's run table has no sets
+      var count = parseInt(m[1], 10);
+      var wrap = document.createElement('div');
+      wrap.className = 'sets';
+      for (var i = 0; i < count; i++) {
+        (function (setIdx) {
+          var key = n + ':' + exIdx + ':' + setIdx;
+          var box = document.createElement('button');
+          box.className = 'set-box' + (setState.done[key] ? ' done' : '');
+          box.textContent = String(setIdx + 1);
+          box.setAttribute('aria-label', 'Set ' + (setIdx + 1));
+          box.setAttribute('aria-pressed', setState.done[key] ? 'true' : 'false');
+          box.addEventListener('click', function () {
+            var on = !box.classList.contains('done');
+            box.classList.toggle('done', on);
+            box.setAttribute('aria-pressed', on ? 'true' : 'false');
+            if (on) setState.done[key] = 1; else delete setState.done[key];
+            saveSets();
+            refreshProgress(n);
+            if (on && navigator.vibrate) navigator.vibrate(12);
+          });
+          wrap.appendChild(box);
+        })(i);
+      }
+      row.children[0].appendChild(wrap);
+    });
+
+    // reset button, only where there are sets to reset
+    if (dayTotals(n).total) {
+      var reset = document.createElement('button');
+      reset.className = 'reset-sets';
+      reset.textContent = '↺ Reset this session';
+      reset.addEventListener('click', function () {
+        panel.querySelectorAll('.set-box').forEach(function (b) {
+          b.classList.remove('done');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        Object.keys(setState.done).forEach(function (k) {
+          if (k.indexOf(n + ':') === 0) delete setState.done[k];
+        });
+        saveSets();
+        refreshProgress(n);
+      });
+      panel.querySelector('.detail').appendChild(reset);
+    }
+
+    var hint = card.querySelector('.ex .hint');
+    if (hint) {
+      var prog = document.createElement('span');
+      prog.className = 'prog';
+      hint.appendChild(prog);
+    }
+    refreshProgress(n);
+  });
+
+  /* ---------------- pinned meal variants ---------------- */
+  var pinned = load('pins', {});
+
+  days.forEach(function (card) {
+    var n = card.getAttribute('data-day');
+    card.querySelectorAll('.cell').forEach(function (cell) {
+      var dish = cell.querySelector('.dish');
+      var alt = cell.querySelector('.alt');
+      if (!dish || !alt) return;
+
+      var key = n + ':' + cell.getAttribute('data-label');
+      var options = [dish.innerHTML].concat(
+        alt.innerHTML.replace(/^\s*\/\s*/, '').split(/\s+\/\s+/)
+      ).map(function (s) { return s.trim(); });
+
+      var box = document.createElement('div');
+      box.className = 'alts';
+      alt.replaceWith(box);
+
+      function paint() {
+        var cur = pinned[key] || 0;
+        if (cur >= options.length) cur = 0;
+        dish.innerHTML = (cur ? '<span class="pinned">📌</span>' : '') + options[cur];
+        box.innerHTML = '';
+        options.forEach(function (opt, i) {
+          if (i === cur) return;
+          var chip = document.createElement('button');
+          chip.className = 'alt-chip' + (i === 0 ? ' reset' : '');
+          chip.innerHTML = opt;
+          chip.title = 'Make this the meal';
+          chip.addEventListener('click', function () {
+            if (i === 0) delete pinned[key]; else pinned[key] = i;
+            save('pins', pinned);
+            paint();
+          });
+          box.appendChild(chip);
+        });
+      }
+      paint();
+    });
+  });
+
+  /* ---------------- day accordion + pills + back button ---------------- */
+  function setOpen(card, open) {
     card.classList.toggle('open', open);
     card.querySelector('.day-head').setAttribute('aria-expanded', open ? 'true' : 'false');
   }
 
-  days.forEach(function (card) {
-    card.querySelector('.day-head').addEventListener('click', function () {
-      var willOpen = !card.classList.contains('open');
-      days.forEach(function (other) { if (other !== card) setDay(other, false); });
-      setDay(card, willOpen);
-      // days above may have just collapsed — keep this header on screen
-      if (willOpen) {
-        setTimeout(function () {
-          var top = card.getBoundingClientRect().top;
-          if (top < 0 || top > window.innerHeight * 0.55) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 60);
+  function render(slug, scroll) {
+    var target = null;
+    days.forEach(function (card) {
+      var on = SLUGS[+card.getAttribute('data-day')] === slug;
+      if (on) target = card;
+      setOpen(card, on);
+    });
+    pills.forEach(function (p) {
+      p.classList.toggle('active', SLUGS[+p.getAttribute('data-jump')] === slug);
+    });
+    if (target && scroll) {
+      setTimeout(function () {
+        var top = target.getBoundingClientRect().top;
+        if (top < 66 || top > window.innerHeight * 0.55) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 60);
+    }
+  }
+
+  var atRoot = true;
+  function go(slug) {
+    try {
+      if (slug) {
+        if (atRoot) { history.pushState({ d: slug }, '', '#' + slug); atRoot = false; }
+        else history.replaceState({ d: slug }, '', '#' + slug);
+      } else if (!atRoot) {
+        history.back();      // popstate renders — lets the back button close a day
+        return;
       }
+    } catch (e) {}
+    render(slug, true);
+  }
+
+  window.addEventListener('popstate', function () {
+    var slug = (location.hash || '').replace('#', '');
+    atRoot = !slug;
+    render(SLUGS.indexOf(slug) > 0 ? slug : '', true);
+  });
+
+  days.forEach(function (card) {
+    var slug = SLUGS[+card.getAttribute('data-day')];
+    card.querySelector('.day-head').addEventListener('click', function () {
+      go(card.classList.contains('open') ? '' : slug);
+    });
+  });
+  pills.forEach(function (p) {
+    p.addEventListener('click', function () {
+      var slug = SLUGS[+p.getAttribute('data-jump')];
+      go(p.classList.contains('active') ? '' : slug);
     });
   });
 
+  /* nested workout panel */
   document.querySelectorAll('.ex').forEach(function (btn) {
     btn.setAttribute('aria-expanded', 'false');
     btn.addEventListener('click', function () {
@@ -658,10 +1116,77 @@
     });
   });
 
-  // open today (Mon = card 1 … Sun = card 7)
+  /* ---------------- shopping list ---------------- */
+  var bought = load('bought', {});
+
+  document.querySelectorAll('.shop-card').forEach(function (card) {
+    var group = card.getAttribute('data-shop');
+    var count = card.querySelector('.shop-count');
+    var head = card.querySelector('.day-head');
+    var items = Array.prototype.slice.call(card.querySelectorAll('.buy'));
+
+    function refresh() {
+      var left = items.filter(function (b) { return !b.classList.contains('got'); }).length;
+      count.textContent = left ? left + ' left' : '✓ done';
+    }
+
+    items.forEach(function (btn) {
+      var key = group + ':' + btn.querySelector('.item').textContent.trim();
+      if (bought[key]) btn.classList.add('got');
+      btn.setAttribute('aria-pressed', bought[key] ? 'true' : 'false');
+      btn.addEventListener('click', function () {
+        var on = !btn.classList.contains('got');
+        btn.classList.toggle('got', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (on) bought[key] = 1; else delete bought[key];
+        save('bought', bought);
+        refresh();
+        if (on && navigator.vibrate) navigator.vibrate(12);
+      });
+    });
+
+    var clear = document.createElement('button');
+    clear.className = 'reset-sets';
+    clear.style.margin = '4px 0 16px 18px';
+    clear.textContent = '↺ Clear ticks';
+    clear.addEventListener('click', function () {
+      items.forEach(function (b) {
+        b.classList.remove('got');
+        b.setAttribute('aria-pressed', 'false');
+        delete bought[group + ':' + b.querySelector('.item').textContent.trim()];
+      });
+      save('bought', bought);
+      refresh();
+    });
+    card.querySelector('.day-inner').appendChild(clear);
+
+    head.setAttribute('aria-expanded', 'false');
+    head.addEventListener('click', function () {
+      var open = !card.classList.contains('open');
+      card.classList.toggle('open', open);
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    refresh();
+  });
+
+  /* ---------------- sticky bar shadow ---------------- */
+  var bar = document.querySelector('.daybar');
+  window.addEventListener('scroll', function () {
+    bar.classList.toggle('stuck', bar.getBoundingClientRect().top <= 0);
+  }, { passive: true });
+
+  /* ---------------- first paint: deep link, else today ---------------- */
   var wd = new Date().getDay();
-  var today = document.querySelector('.day[data-day="' + (wd === 0 ? 7 : wd) + '"]');
-  if (today) { today.classList.add('today'); setDay(today, true); }
+  var todayN = wd === 0 ? 7 : wd;
+  var todayCard = document.querySelector('.day[data-day="' + todayN + '"]');
+  if (todayCard) todayCard.classList.add('today');
+  var todayPill = document.querySelector('.pill[data-jump="' + todayN + '"]');
+  if (todayPill) todayPill.classList.add('today');
+
+  var hash = (location.hash || '').replace('#', '');
+  if (SLUGS.indexOf(hash) > 0) { atRoot = false; render(hash, true); }
+  else render(SLUGS[todayN], false);
+})();
 </script>
 </body>
 </html>
