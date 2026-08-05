@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weekly Plan — Meal Prep + Gym</title>
+<style>
+  :root {
+    --bg: #fffbf5;
+    --fg: #1d1b1a;
+    --muted: #6b6560;
+    --line: #ece2d6;
+    --card: #ffffff;
+    --panel: #fdf6ec;
+    --veg: #2e8b57;
+    --veg-bg: #e7f6ec;
+    --meat: #c0563a;
+    --meat-bg: #fdeae4;
+    --egg: #c98a13;
+    --egg-bg: #fdf2d9;
+    --fish: #2b7fb8;
+    --fish-bg: #e4f2fb;
+    --shadow: 0 1px 2px rgba(60,40,20,.06), 0 4px 14px rgba(60,40,20,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a;
+      --fg: #ecebe8;
+      --muted: #9c968f;
+      --line: #2d3037;
+      --card: #1b1e23;
+      --panel: #191c21;
+      --veg: #74d69b;   --veg-bg: #17301f;
+      --meat: #f0977a;  --meat-bg: #331d16;
+      --egg: #f0c35a;   --egg-bg: #322611;
+      --fish: #74bdec;  --fish-bg: #12283a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+  * { box-sizing: border-box; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; padding: 0 20px 80px;
+    background: var(--bg); color: var(--fg);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    margin: 24px 0 22px; padding: 26px 28px; border-radius: 18px; position: relative; overflow: hidden;
+    background: linear-gradient(120deg, #ff9a5a 0%, #f2637f 38%, #9a5ce0 72%, #3aa3d8 100%);
+    color: #fff; box-shadow: var(--shadow);
+  }
+  .hero h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -.02em; }
+  .hero p { margin: 0; font-size: 14.5px; opacity: .95; max-width: 640px; }
+  .hero .emojis { font-size: 30px; letter-spacing: 4px; margin-top: 14px; display: block; }
+  .hero::after {
+    content: ""; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px;
+    border-radius: 50%; background: rgba(255,255,255,.14);
+  }
+
+  /* ---------- info strips ---------- */
+  .strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px;
+    margin-bottom: 24px;
+  }
+  .chip {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 13px 15px; font-size: 13px; color: var(--muted); box-shadow: var(--shadow);
+  }
+  .chip b { color: var(--fg); display: block; font-size: 12.5px; margin-bottom: 3px; }
+  .chip .ico { font-size: 18px; margin-right: 6px; }
+
+  /* ---------- table ---------- */
+  table { border-collapse: separate; border-spacing: 0 12px; width: 100%; }
+  thead th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--muted); font-weight: 700; padding: 0 16px 4px; white-space: nowrap;
+  }
+  td { padding: 16px; vertical-align: top; font-size: 14px; background: var(--card); }
+
+  tr.main td { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); box-shadow: var(--shadow); }
+  tr.main td:first-child {
+    border-left: 6px solid var(--day); border-top-left-radius: 14px; border-bottom-left-radius: 14px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--day) 12%, var(--card)), var(--card));
+  }
+  tr.main td:last-child { border-right: 1px solid var(--line); border-top-right-radius: 14px; border-bottom-right-radius: 14px; }
+  tr.main.open td:first-child { border-bottom-left-radius: 0; }
+  tr.main.open td:last-child { border-bottom-right-radius: 0; }
+
+  .day-name { font-weight: 700; font-size: 16px; color: var(--day); }
+  .day .num { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; letter-spacing: .04em; }
+  .cook, .eat {
+    display: inline-block; margin-top: 10px; font-size: 10.5px; padding: 4px 9px; border-radius: 999px;
+    font-weight: 700; letter-spacing: .04em; white-space: nowrap;
+  }
+  .cook { background: var(--day); color: #fff; }
+  .eat  { background: var(--panel); color: var(--muted); border: 1px dashed var(--line); }
+
+  .meal-ico { font-size: 20px; float: right; margin-left: 8px; opacity: .9; }
+  .tag {
+    display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 6px; margin-bottom: 7px;
+  }
+  .tag.v { color: var(--veg); background: var(--veg-bg); }
+  .tag.m { color: var(--meat); background: var(--meat-bg); }
+  .tag.e { color: var(--egg); background: var(--egg-bg); }
+  .tag.f { color: var(--fish); background: var(--fish-bg); }
+  .dish { font-weight: 600; display: block; }
+  .alt { color: var(--muted); display: block; margin-top: 4px; font-size: 13px; }
+  .alt em { color: var(--meat); font-style: normal; font-weight: 600; }
+  .note { display: block; margin-top: 7px; font-size: 12px; color: var(--muted); padding-left: 9px; border-left: 2px solid var(--line); }
+
+  ul.snack { margin: 0; padding-left: 2px; list-style: none; }
+  ul.snack li { margin-bottom: 5px; font-size: 13.5px; }
+  ul.snack li span { margin-right: 6px; }
+
+  .ex {
+    cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--day) 16%, var(--card)), var(--card));
+    border: 1px solid color-mix(in srgb, var(--day) 32%, var(--line));
+    color: var(--fg); font-weight: 700; font-size: 14px; font-family: inherit;
+    border-radius: 12px; padding: 12px 14px; width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 10px; transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .ex:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .ex .caret { color: var(--day); font-size: 11px; transition: transform .18s ease; flex: none; }
+  tr.main.open .ex .caret { transform: rotate(90deg); }
+  .ex .ex-ico { font-size: 20px; flex: none; }
+  .ex .hint { display: block; font-weight: 500; color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+  tr.detail { display: none; }
+  tr.detail.open { display: table-row; }
+  tr.detail td {
+    background: var(--panel); padding: 4px 18px 20px;
+    border: 1px solid var(--line); border-top: none; border-left: 6px solid var(--day);
+    border-radius: 0 0 14px 14px; box-shadow: var(--shadow);
+  }
+  .detail h4 {
+    margin: 16px 0 9px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--day); font-weight: 800;
+  }
+  table.work { border-spacing: 0 6px; max-width: 760px; }
+  table.work th { font-size: 10.5px; padding: 0 12px 2px; }
+  table.work td { padding: 10px 12px; font-size: 13.5px; background: var(--card); border: 1px solid var(--line); border-left: none; border-right: none; }
+  table.work td:first-child { border-left: 1px solid var(--line); border-radius: 9px 0 0 9px; font-weight: 600; }
+  table.work td:last-child { border-right: 1px solid var(--line); border-radius: 0 9px 9px 0; color: var(--muted); }
+  table.work td:nth-child(2) { color: var(--day); font-weight: 700; white-space: nowrap; }
+  .tip {
+    margin-top: 12px; font-size: 13px; color: var(--muted); max-width: 760px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  }
+  .tip b { color: var(--fg); }
+  .tip .ico { font-size: 16px; margin-right: 5px; }
+
+  /* ---------- MOBILE ---------- */
+  @media (max-width: 820px) {
+    body { padding: 0 12px 56px; }
+    .hero { margin: 16px 0 18px; padding: 22px 20px; border-radius: 16px; }
+    .hero h1 { font-size: 22px; }
+    .hero p { font-size: 13.5px; }
+    .hero .emojis { font-size: 25px; }
+    .strip { grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
+
+    table, tbody, tr, td { display: block; width: 100%; }
+    table { border-spacing: 0; }
+    thead { position: absolute; left: -9999px; }
+
+    tr.main {
+      display: block; background: var(--card); border-radius: 16px; margin-bottom: 14px;
+      overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--line);
+      border-top: 5px solid var(--day);
+    }
+    tr.main.open { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    tr.main td {
+      border: none; border-bottom: 1px solid var(--line); border-radius: 0 !important;
+      padding: 13px 15px; box-shadow: none; background: var(--card);
+    }
+    tr.main td:last-child { border-bottom: none; }
+    tr.main td:first-child {
+      border-left: none;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--day) 16%, var(--card)), var(--card));
+      display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    }
+    .day-name { font-size: 18px; }
+    .day .num { margin-top: 0; }
+    .cook, .eat { margin-top: 0; margin-left: auto; }
+
+    tr.main td[data-label]::before {
+      content: attr(data-label);
+      display: block; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    tr.main td.exercise { padding: 12px 15px; }
+    tr.main td.exercise::before { display: none; }
+    .ex { min-height: 58px; font-size: 15px; }
+
+    tr.detail.open { display: block; }
+    tr.detail td {
+      border-left: 1px solid var(--line); border-top: none; border-radius: 0 0 16px 16px;
+      margin-bottom: 14px; padding: 4px 15px 18px;
+    }
+    table.work { display: block; }
+    table.work tbody, table.work tr, table.work td { display: block; width: 100%; }
+    table.work thead { position: absolute; left: -9999px; }
+    table.work tr {
+      background: var(--card); border: 1px solid var(--line); border-radius: 11px;
+      padding: 11px 13px; margin-bottom: 8px;
+    }
+    table.work td { border: none !important; padding: 0; background: none; border-radius: 0 !important; }
+    table.work td:first-child { margin-bottom: 5px; }
+    table.work td:nth-child(2), table.work td:last-child {
+      display: inline-block; font-size: 12.5px; margin-right: 14px;
+    }
+    table.work td:nth-child(2)::before { content: "⛓ "; }
+    table.work td:last-child::before { content: "⏱ "; }
+  }
+  @media (max-width: 380px) {
+    .day-name { font-size: 17px; }
+    .cook, .eat { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Weekly Plan — Meal Prep &amp; Training</h1>
+    <p>Beginner. Weight gain. <b>Cook only 3 times a week</b> — Sunday, Wednesday and Friday. Six gym days, one easy run. Tap any workout to open the full session.</p>
+    <span class="emojis">🍗 🫘 🥬 🐟 🍳 🍌 🏋️ 🏃</span>
+  </div>
+
+  <div class="strip">
+    <div class="chip"><b><span class="ico">🍳</span>3 cook sessions</b>Sun → Sun·Mon·Tue &nbsp;•&nbsp; Wed → Wed·Thu &nbsp;•&nbsp; Fri → Fri·Sat</div>
+    <div class="chip"><b><span class="ico">🥗</span>Balance rule</b>One veg meal + one meat/fish/egg meal every single day</div>
+    <div class="chip"><b><span class="ico">🦵</span>Leg days</b>Wednesday &amp; Friday — never Saturday or Monday, so Sunday's run is fresh</div>
+    <div class="chip"><b><span class="ico">🥣</span>Granola</b>That's breakfast — deliberately not in this table</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Days</th><th>Lunch</th><th>Dinner</th><th>Snacks</th><th>Exercise</th></tr>
+    </thead>
+    <tbody>
+
+      <!-- MONDAY -->
+      <tr class="main" data-row="1" style="--day:#e0553f">
+        <td class="day"><span class="day-name">Monday</span><span class="num">DAY 1</span><span class="eat">🥡 EAT — batch A</span></td>
+        <td data-label="Lunch">
+          <span class="meal-ico">🍗</span><span class="tag m">Meat</span>
+          <span class="dish">Chicken thigh &amp; rice bowl</span>
+          <span class="alt">/ chicken breast + quinoa / chicken &amp; chickpea pulao / turkey mince rice / grilled chicken + couscous / <em>beef mince rice</em></span>
+          <span class="note">From Sunday's batch. Reheat with lemon and hot sauce so it doesn't taste like leftovers.</span>
+        </td>
+        <td data-label="Dinner">
+          <span class="meal-ico">🫘</span><span class="tag v">Vegetarian · beans</span>
+          <span class="dish">Rajma (kidney bean curry) + rice</span>
+          <span class="alt">/ chole (chickpea masala) / black bean chilli / lobia (black-eyed peas) / butter beans in tomato / masoor dal + rice</span>
+          <span class="note">Top with curd and raw onion. A spoon of ghee adds ~120 easy calories.</span>
+        </td>
+        <td data-label="Snacks">
+          <ul class="snack">
+            <li><span>🥤</span>Protein shake (post-workout)</li>
+            <li><span>🍌</span>2 bananas</li>
+            <li><span>🌰</span>Almonds + dates</li>
+          </ul>
+        </td>
+        <td class="exercise" data-label="Exercise">
+          <button class="ex" data-target="1"><span class="caret">▶</span><span class="ex-ico">💪</span><span>Push — Chest, Shoulders, Triceps<span class="hint">5 exercises · ~55 min</span></span></button>
+        </td>
+      </tr>
+      <tr class="detail" data-detail="1" style="--day:#e0553f">
+        <td colspan="5"><div class="detail">
+          <h4>🔥 Warm-up — 8 min</h4>
+          <div class="tip">5 min easy bike or rower, then arm circles, band pull-aparts 2×15, and one empty-bar set of the first lift.</div>
+          <h4>🏋️ Main work</h4>
+          <table class="work">
+            <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+            <tbody>
+            <tr><td>Barbell bench press <span class="alt">(or dumbbell bench)</span></td><td>4 × 6–8</td><td>2–3 min</td></tr>
+            <tr><td>Seated dumbbell shoulder press</td><td>3 × 8–10</td><td>2 min</td></tr>
+            <tr><td>Incline dumbbell press</td><td>3 × 10–12</td><td>90 s</td></tr>
+            <tr><td>Cable lateral raise</td><td>3 × 12–15</td><td>60 s</td></tr>
+            <tr><td>Rope triceps pushdown</td><td>3 × 12–15</td><td>60 s</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><span class="ico">💡</span><b>Beginner note:</b> pick a weight where the last rep is hard but your form doesn't break. Add 2.5 kg to the bench when you hit 8 reps on all 4 sets.</div>
+        </div></td>
+      </tr>
+
+      <!-- TUESDAY -->
+      <tr class="main" data-row="2" style="--day:#e8912f">
+        <td class="day"><span class="day-name">Tuesday</span><span class="num">DAY 2</span><span class="eat">🥡 EAT — batch A</span></td>
+        <td data-label="Lunch">
+          <span class="meal-ico">🍚</span><span class="tag m">Meat</span>
+          <span class="dish">Chicken thigh &amp; rice bowl</span>
+          <span class="alt">/ shred it into a wrap / over salad / as fried rice with an egg / with chickpeas stirred in</span>
+          <span class="note">Day 3 of batch A — the last portion. If you're not sure, freeze this box on Sunday and thaw it Monday night.</span>
+        </td>
+        <td data-label="Dinner">
+          <span class="meal-ico">🍛</span><span class="tag v">Vegetarian · lentils</span>
+          <span class="dish">Rajma + rice</span>
+          <span class="alt">/ swap to fresh tadka dal (20 min) / chana + roti / rajma in a wrap with cheese / dal khichdi</span>
+          <span class="note">If you're bored, cook a quick tadka dal — lentils need no soaking and take 20 minutes.</span>
+        </td>
+        <td data-label="Snacks">
+          <ul class="snack">
+            <li><span>🥤</span>Protein shake (post-workout)</li>
+            <li><span>🍌</span>Banana + peanut butter</li>
+            <li><span>🍇</span>Walnuts &amp; raisins</li>
+          </ul>
+        </td>
+        <td class="exercise" data-label="Exercise">
+          <button class="ex" data-target="2"><span class="caret">▶</span><span class="ex-ico">🔙</span><span>Pull — Back &amp; Biceps<span class="hint">5 exercises · ~55 min</span></span></button>
+        </td>
+      </tr>
+      <tr class="detail" data-detail="2" style="--day:#e8912f">
+        <td colspan="5"><div class="detail">
+          <h4>🔥 Warm-up — 8 min</h4>
+          <div class="tip">5 min row, then dead hangs 2×20 s and light lat pulldowns 2×15.</div>
+          <h4>🏋️ Main work</h4>
+          <table class="work">
+            <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+            <tbody>
+            <tr><td>Lat pulldown <span class="alt">(or assisted pull-up)</span></td><td>4 × 8–10</td><td>2 min</td></tr>
+            <tr><td>Barbell row <span class="alt">(or chest-supported row)</span></td><td>4 × 8–10</td><td>2 min</td></tr>
+            <tr><td>Seated cable row</td><td>3 × 10–12</td><td>90 s</td></tr>
+            <tr><td>Face pull</td><td>3 × 15</td><td>60 s</td></tr>
+            <tr><td>Dumbbell curl <span class="alt">/ EZ-bar curl</span></td><td>3 × 10–12</td><td>60 s</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><span class="ico">💡</span><b>Beginner note:</b> keep your chest up on rows and pull with your elbows, not your hands. If pull-ups are impossible, stay on assisted — you'll get there in ~8 weeks.</div>
+        </div></td>
+      </tr>
+
+      <!-- WEDNESDAY -->
+      <tr class="main" data-row="3" style="--day:#3f9e5f">
+        <td class="day"><span class="day-name">Wednesday</span><span class="num">DAY 3</span><span class="cook">👨‍🍳 COOK — batch B</span></td>
+        <td data-label="Lunch">
+          <span class="meal-ico">🥬</span><span class="tag v">Vegetarian · leafy greens</span>
+          <span class="dish">Palak paneer + jeera rice</span>
+          <span class="alt">/ palak tofu / spinach &amp; chickpea curry / saag with roti / methi-moong dal / spinach-lentil dal with paneer cubes</span>
+          <span class="note">500 g spinach cooks down to almost nothing. Iron, folate and vitamin K in one pot.</span>
+        </td>
+        <td data-label="Dinner">
+          <span class="meal-ico">🐟</span><span class="tag f">Fish</span>
+          <span class="dish">Baked salmon + roasted potatoes</span>
+          <span class="alt">/ baked tilapia / grilled mackerel / pan-seared basa / tandoori fish / prawn masala / <em>lamb chops</em></span>
+          <span class="note">One sheet pan, 200 °C, 18 min. Omega-3 and vitamin D for the week.</span>
+        </td>
+        <td data-label="Snacks">
+          <ul class="snack">
+            <li><span>🥤</span>Protein shake (post-workout)</li>
+            <li><span>🍎</span>Apple + orange</li>
+            <li><span>🥜</span>Cashews &amp; dried apricots</li>
+          </ul>
+        </td>
+        <td class="exercise" data-label="Exercise">
+          <button class="ex" data-target="3"><span class="caret">▶</span><span class="ex-ico">🦵</span><span>Legs — Quad focus + Core<span class="hint">6 exercises · ~60 min</span></span></button>
+        </td>
+      </tr>
+      <tr class="detail" data-detail="3" style="--day:#3f9e5f">
+        <td colspan="5"><div class="detail">
+          <h4>🔥 Warm-up — 10 min</h4>
+          <div class="tip">5 min bike, bodyweight squats 2×15, walking lunges 1×20 steps, then two ramp-up sets on the squat bar.</div>
+          <h4>🏋️ Main work</h4>
+          <table class="work">
+            <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+            <tbody>
+            <tr><td>Back squat <span class="alt">(or goblet squat to start)</span></td><td>4 × 6–8</td><td>3 min</td></tr>
+            <tr><td>Leg press</td><td>3 × 10–12</td><td>2 min</td></tr>
+            <tr><td>Walking dumbbell lunge</td><td>3 × 10 per leg</td><td>90 s</td></tr>
+            <tr><td>Leg extension</td><td>3 × 12–15</td><td>60 s</td></tr>
+            <tr><td>Standing calf raise</td><td>4 × 15</td><td>45 s</td></tr>
+            <tr><td>Plank</td><td>3 × 45 s</td><td>45 s</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><span class="ico">💡</span><b>Beginner note:</b> master the goblet squat before loading a barbell. Depth beats weight — thighs at least parallel. You'll be sore Thursday, which is why Thursday is a push day.</div>
+        </div></td>
+      </tr>
+
+      <!-- THURSDAY -->
+      <tr class="main" data-row="4" style="--day:#3a86c8">
+        <td class="day"><span class="day-name">Thursday</span><span class="num">DAY 4</span><span class="eat">🥡 EAT — batch B</span></td>
+        <td data-label="Lunch">
+          <span class="meal-ico">🍲</span><span class="tag v">Vegetarian · leafy greens</span>
+          <span class="dish">Palak paneer + jeera rice</span>
+          <span class="alt">/ stir in cooked chana for extra protein / with roti instead of rice / as a wrap filling / thinned into a spinach dal soup</span>
+          <span class="note">Spinach dishes reheat beautifully — add a splash of milk or cream.</span>
+        </td>
+        <td data-label="Dinner">
+          <span class="meal-ico">🍽️</span><span class="tag f">Fish</span>
+          <span class="dish">Salmon + potatoes</span>
+          <span class="alt">/ flaked cold over salad / into a fish rice bowl / with a fried egg on top / mashed into fish cakes</span>
+          <span class="note">Don't microwave fish to death — 60 seconds is plenty, or eat it cold.</span>
+        </td>
+        <td data-label="Snacks">
+          <ul class="snack">
+            <li><span>🥤</span>Protein shake (post-workout)</li>
+            <li><span>🍌</span>2 bananas</li>
+            <li><span>🌰</span>Pistachios + dates</li>
+          </ul>
+        </td>
+        <td class="exercise" data-label="Exercise">
+          <button class="ex" data-target="4"><span class="caret">▶</span><span class="ex-ico">🙌</span><span>Push — Shoulder emphasis<span class="hint">5 exercises · ~50 min</span></span></button>
+        </td>
+      </tr>
+      <tr class="detail" data-detail="4" style="--day:#3a86c8">
+        <td colspan="5"><div class="detail">
+          <h4>🔥 Warm-up — 8 min</h4>
+          <div class="tip">Band pull-aparts 2×20, shoulder dislocates with a broomstick 2×10, then light press sets.</div>
+          <h4>🏋️ Main work</h4>
+          <table class="work">
+            <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+            <tbody>
+            <tr><td>Standing overhead press</td><td>4 × 6–8</td><td>2–3 min</td></tr>
+            <tr><td>Incline barbell press <span class="alt">/ incline dumbbell</span></td><td>3 × 8–10</td><td>2 min</td></tr>
+            <tr><td>Cable chest fly <span class="alt">/ pec deck</span></td><td>3 × 12–15</td><td>60 s</td></tr>
+            <tr><td>Dumbbell lateral raise</td><td>4 × 12–15</td><td>45 s</td></tr>
+            <tr><td>Overhead cable triceps extension</td><td>3 × 12</td><td>60 s</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><span class="ico">💡</span><b>Beginner note:</b> a lighter push day than Monday — go easier on the top-end weight and chase clean reps. Squeeze at the top of every lateral raise.</div>
+        </div></td>
+      </tr>
+
+      <!-- FRIDAY -->
+      <tr class="main" data-row="5" style="--day:#8256cf">
+        <td class="day"><span class="day-name">Friday</span><span class="num">DAY 5</span><span class="cook">👨‍🍳 COOK — batch C</span></td>
+        <td data-label="Lunch">
+          <span class="meal-ico">🍜</span><span class="tag m">Meat</span>
+          <span class="dish">Chicken keema + rice / roti</span>
+          <span class="alt">/ chicken &amp; white bean stew / turkey mince chilli / chicken curry with potatoes / chicken-lentil (dal gosht style) / <em>mutton keema</em></span>
+          <span class="note">Mince cooks in 15 minutes. Throw a tin of beans in — it stretches the meat and adds fibre.</span>
+        </td>
+        <td data-label="Dinner">
+          <span class="meal-ico">🍳</span><span class="tag e">Eggs + greens</span>
+          <span class="dish">Egg bhurji with sautéed spinach &amp; toast</span>
+          <span class="alt">/ shakshuka with chickpeas / masala omelette + kale / egg curry with rice / egg &amp; lentil bowl / soft-boiled eggs over dal</span>
+          <span class="note">3 eggs a serving. Cooked fresh each night — it takes 6 minutes, not a prep session.</span>
+        </td>
+        <td data-label="Snacks">
+          <ul class="snack">
+            <li><span>🥤</span>Protein shake (post-workout)</li>
+            <li><span>🥭</span>Banana + mango / berries</li>
+            <li><span>🫒</span>Mixed nuts &amp; figs</li>
+          </ul>
+        </td>
+        <td class="exercise" data-label="Exercise">
+          <button class="ex" data-target="5"><span class="caret">▶</span><span class="ex-ico">🍑</span><span>Legs — Posterior chain<span class="hint">6 exercises · ~60 min</span></span></button>
+        </td>
+      </tr>
+      <tr class="detail" data-detail="5" style="--day:#8256cf">
+        <td colspan="5"><div class="detail">
+          <h4>🔥 Warm-up — 10 min</h4>
+          <div class="tip">5 min bike, glute bridges 2×15, bodyweight good mornings 2×12, then ramp-up sets.</div>
+          <h4>🏋️ Main work</h4>
+          <table class="work">
+            <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+            <tbody>
+            <tr><td>Romanian deadlift</td><td>4 × 8</td><td>2–3 min</td></tr>
+            <tr><td>Bulgarian split squat</td><td>3 × 10 per leg</td><td>90 s</td></tr>
+            <tr><td>Hip thrust</td><td>3 × 10–12</td><td>2 min</td></tr>
+            <tr><td>Seated / lying leg curl</td><td>3 × 12–15</td><td>60 s</td></tr>
+            <tr><td>Seated calf raise</td><td>4 × 15–20</td><td>45 s</td></tr>
+            <tr><td>Hanging knee raise <span class="alt">/ cable crunch</span></td><td>3 × 12</td><td>60 s</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><span class="ico">💡</span><b>Beginner note:</b> RDLs are a hinge, not a squat. Drag the bar along your thighs and stop at the stretch, not when the plates touch the floor. Saturday is upper body, so your legs get a day before Sunday's run.</div>
+        </div></td>
+      </tr>
+
+      <!-- SATURDAY -->
+      <tr class="main" data-row="6" style="--day:#d1467f">
+        <td class="day"><span class="day-name">Saturday</span><span class="num">DAY 6</span><span class="eat">🥡 EAT — batch C</span></td>
+        <td data-label="Lunch">
+          <span class="meal-ico">🌯</span><span class="tag m">Meat</span>
+          <span class="dish">Chicken keema + rice / roti</span>
+          <span class="alt">/ keema wrap with onion &amp; yogurt / keema-stuffed baked potato / over pasta / keema + chole mixed bowl</span>
+          <span class="note">Same batch, different shape. A wrap makes leftovers feel like a new meal.</span>
+        </td>
+        <td data-label="Dinner">
+          <span class="meal-ico">🍳</span><span class="tag e">Eggs + greens</span>
+          <span class="dish">Egg bhurji with sautéed spinach &amp; toast</span>
+          <span class="alt">/ shakshuka / cheese omelette + kale / egg fried rice with peas / eggs over black beans</span>
+          <span class="note">Your second egg meal of the week. Never batch-cook eggs — they turn rubbery.</span>
+        </td>
+        <td data-label="Snacks">
+          <ul class="snack">
+            <li><span>🥤</span>Protein shake (post-workout)</li>
+            <li><span>🍓</span>2 bananas / fruit smoothie</li>
+            <li><span>🍫</span>Almonds &amp; dark chocolate</li>
+          </ul>
+        </td>
+        <td class="exercise" data-label="Exercise">
+          <button class="ex" data-target="6"><span class="caret">▶</span><span class="ex-ico">💪</span><span>Pull + Arms &amp; Core<span class="hint">6 exercises · ~55 min</span></span></button>
+        </td>
+      </tr>
+      <tr class="detail" data-detail="6" style="--day:#d1467f">
+        <td colspan="5"><div class="detail">
+          <h4>🔥 Warm-up — 8 min</h4>
+          <div class="tip">5 min row, dead hangs, band pull-aparts 2×20.</div>
+          <h4>🏋️ Main work</h4>
+          <table class="work">
+            <thead><tr><th>Exercise</th><th>Sets × Reps</th><th>Rest</th></tr></thead>
+            <tbody>
+            <tr><td>Pull-up <span class="alt">(assisted or banded)</span></td><td>4 × max 5–10</td><td>2 min</td></tr>
+            <tr><td>Single-arm dumbbell row</td><td>3 × 10 per side</td><td>90 s</td></tr>
+            <tr><td>Straight-arm cable pulldown</td><td>3 × 12–15</td><td>60 s</td></tr>
+            <tr><td>Incline dumbbell curl</td><td>3 × 10–12</td><td>60 s</td></tr>
+            <tr><td>Dips <span class="alt">/ close-grip bench</span></td><td>3 × 8–12</td><td>90 s</td></tr>
+            <tr><td>Ab wheel <span class="alt">/ dead bug</span></td><td>3 × 8–10</td><td>60 s</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><span class="ico">💡</span><b>Beginner note:</b> no legs today by design — Sunday is your run. Keep this upper-body only and don't let it turn into a squat day.</div>
+        </div></td>
+      </tr>
+
+      <!-- SUNDAY -->
+      <tr class="main" data-row="7" style="--day:#17a9a0">
+        <td class="day"><span class="day-name">Sunday</span><span class="num">DAY 7</span><span class="cook">👨‍🍳 COOK — batch A</span></td>
+        <td data-label="Lunch">
+          <span class="meal-ico">🍗</span><span class="tag m">Meat</span>
+          <span class="dish">Chicken thigh &amp; rice bowl</span>
+          <span class="alt">/ chicken breast + quinoa / chicken &amp; chickpea pulao / grilled chicken + sweet potato / <em>steak</em> if you're treating yourself</span>
+          <span class="note">The big cook: roast ~1.6 kg thigh + 6 cups rice + broccoli and carrots. That's 6 boxes covering Sun, Mon, Tue.</span>
+        </td>
+        <td data-label="Dinner">
+          <span class="meal-ico">🫘</span><span class="tag v">Vegetarian · beans</span>
+          <span class="dish">Rajma / chole + rice</span>
+          <span class="alt">/ black bean chilli / lobia / butter beans in tomato / dal makhani / mixed-bean curry / veg biryani with raita</span>
+          <span class="note">Cook the pot while the chicken roasts — same 45 minutes, two meals done for three days.</span>
+        </td>
+        <td data-label="Snacks">
+          <ul class="snack">
+            <li><span>🥤</span>Protein shake (after the run)</li>
+            <li><span>🍌</span>Banana + dates before the run</li>
+            <li><span>🍉</span>Fruit bowl + curd</li>
+          </ul>
+        </td>
+        <td class="exercise" data-label="Exercise">
+          <button class="ex" data-target="7"><span class="caret">▶</span><span class="ex-ico">🏃</span><span>Cardio — Easy run<span class="hint">Conversational pace · 30–40 min</span></span></button>
+        </td>
+      </tr>
+      <tr class="detail" data-detail="7" style="--day:#17a9a0">
+        <td colspan="5"><div class="detail">
+          <h4>🏃 Session</h4>
+          <table class="work">
+            <thead><tr><th>Block</th><th>Duration</th><th>Effort</th></tr></thead>
+            <tbody>
+            <tr><td>Walk + dynamic stretches</td><td>5 min</td><td>Easy</td></tr>
+            <tr><td>Continuous run</td><td>25–30 min</td><td>Conversational</td></tr>
+            <tr><td>Cool-down walk</td><td>5 min</td><td>Easy</td></tr>
+            <tr><td>Stretch: hamstrings, quads, calves, hip flexors</td><td>5 min</td><td>Hold 30 s each</td></tr>
+            </tbody>
+          </table>
+          <div class="tip"><span class="ico">💡</span><b>Beginner note:</b> start with run 3 min / walk 2 min × 6 rounds if 25 minutes straight is too much, then cut the walk breaks week by week.</div>
+          <div class="tip"><span class="ico">⚠️</span><b>Weight-gain warning:</b> don't turn this into a hard interval session — it burns the calories you're trying to keep. Easy pace only, and eat a real meal afterwards.</div>
+        </div></td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <div class="strip" style="margin-top:24px">
+    <div class="chip"><b><span class="ico">📈</span>Weight gain basics</b>Eat ~300–500 kcal above maintenance. 1.6–2 g protein per kg bodyweight. Weigh yourself once a week, same morning. Target 0.25–0.5 kg per week — faster is mostly fat.</div>
+    <div class="chip"><b><span class="ico">🥦</span>Vitamins covered</b>Spinach (iron, K, folate) · salmon (omega-3, D, B12) · eggs (choline, B12) · beans &amp; lentils (fibre, magnesium, plant protein) · fruit &amp; dry fruit (C, potassium) · paneer &amp; curd (calcium)</div>
+    <div class="chip"><b><span class="ico">🧊</span>3-day storage</b>Batch A stretches to Tuesday. Cool it fast, fridge below 4 °C, and freeze Tuesday's box on Sunday if you want zero risk — thaw it Monday night.</div>
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('.ex').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-target');
+      var row = document.querySelector('tr.main[data-row="' + id + '"]');
+      var detail = document.querySelector('tr.detail[data-detail="' + id + '"]');
+      var isOpen = detail.classList.contains('open');
+      detail.classList.toggle('open', !isOpen);
+      row.classList.toggle('open', !isOpen);
+    });
+  });
+</script>
+</body>
+</html>
