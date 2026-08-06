@@ -140,9 +140,14 @@
   }
   .pill .letter { display: block; font-size: 15px; font-weight: 800; letter-spacing: .02em; }
   .pill .sub { display: block; font-size: 8.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; opacity: .75; }
+  .pill .mus {
+    display: block; font-size: 8px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    opacity: .5; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .pill.today { border-color: color-mix(in srgb, var(--pday) 55%, var(--line)); color: var(--pday); }
   .pill.active { background: var(--pday); border-color: var(--pday); color: #fff; }
   .pill.active .sub { opacity: .85; }
+  .pill.active .mus { opacity: .75; }
   .pill.done::after {
     content: "✓"; position: absolute; top: -5px; right: -3px; width: 15px; height: 15px;
     font-size: 9px; line-height: 15px; font-weight: 800; border-radius: 50%;
@@ -213,9 +218,18 @@
   .day.short-hours .hours { color: var(--day); }
 
   .peek { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); transition: opacity .2s ease; }
-  .peek-ex { font-weight: 700; color: var(--fg); }
-  .peek-food { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .peek-ex { font-weight: 700; color: var(--fg); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .peek-food { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
   .day.open .peek { opacity: .4; }
+
+  /* muscle groups — the whole point of the collapsed card is knowing what you train today */
+  .mg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .mg i {
+    font-style: normal; font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 6px; white-space: nowrap;
+    color: var(--day); background: color-mix(in srgb, var(--day) 13%, transparent);
+    border: 1px solid color-mix(in srgb, var(--day) 30%, transparent);
+  }
 
   .cook, .eat {
     flex: none; font-size: 10.5px; padding: 5px 10px; border-radius: 999px;
@@ -386,6 +400,7 @@
     .day-id { min-width: 0; flex: 1; }
     .day-name { font-size: 17.5px; }
     .peek { flex-basis: 100%; order: 3; font-size: 12px; }
+    .mg i { font-size: 9px; padding: 2px 6px; }
     .cook, .eat { order: 2; }
 
     .cells { grid-template-columns: 1fr; }
@@ -475,13 +490,13 @@
 
   <nav class="daybar" aria-label="Jump to a day">
     <div class="daybar-inner">
-      <button class="pill" data-jump="1" style="--pday:#e0553f"><span class="letter">M</span><span class="sub">Push</span></button>
-      <button class="pill" data-jump="2" style="--pday:#e8912f"><span class="letter">T</span><span class="sub">Pull</span></button>
-      <button class="pill" data-jump="3" style="--pday:#3f9e5f"><span class="letter">W</span><span class="sub">Legs</span></button>
-      <button class="pill" data-jump="4" style="--pday:#3a86c8"><span class="letter">T</span><span class="sub">Push</span></button>
-      <button class="pill" data-jump="5" style="--pday:#8256cf"><span class="letter">F</span><span class="sub">Legs</span></button>
-      <button class="pill" data-jump="6" style="--pday:#d1467f"><span class="letter">S</span><span class="sub">Pull</span></button>
-      <button class="pill" data-jump="7" style="--pday:#17a9a0"><span class="letter">S</span><span class="sub">Run</span></button>
+      <button class="pill" data-jump="1" style="--pday:#e0553f"><span class="letter">M</span><span class="sub">Push</span><span class="mus">Ch·Sh</span></button>
+      <button class="pill" data-jump="2" style="--pday:#e8912f"><span class="letter">T</span><span class="sub">Pull</span><span class="mus">Bk·Bi</span></button>
+      <button class="pill" data-jump="3" style="--pday:#3f9e5f"><span class="letter">W</span><span class="sub">Legs</span><span class="mus">Quad</span></button>
+      <button class="pill" data-jump="4" style="--pday:#3a86c8"><span class="letter">T</span><span class="sub">Push</span><span class="mus">Sh·Ch</span></button>
+      <button class="pill" data-jump="5" style="--pday:#8256cf"><span class="letter">F</span><span class="sub">Legs</span><span class="mus">Ham</span></button>
+      <button class="pill" data-jump="6" style="--pday:#d1467f"><span class="letter">S</span><span class="sub">Pull</span><span class="mus">Bk·Arm</span></button>
+      <button class="pill" data-jump="7" style="--pday:#17a9a0"><span class="letter">S</span><span class="sub">Run</span><span class="mus">Core</span></button>
       <span class="gym-status" id="gym-status" role="status"><span class="dot"></span><span class="txt">—</span></span>
       <button class="theme-btn" id="theme" aria-label="Switch between light and dark">🌙</button>
     </div>
@@ -494,7 +509,7 @@
         <button class="day-head" aria-expanded="false" aria-controls="day-body-1">
           <span class="caret">▶</span>
           <span class="day-id"><span class="day-name">Monday</span><span class="num">DAY 1</span></span>
-          <span class="peek"><span class="peek-ex">💪 Push — chest &amp; shoulders</span><span class="peek-food">🍗 Chicken &amp; rice · 🫘 Rajma</span></span>
+          <span class="peek"><span class="peek-ex">💪 Push<span class="mg"><i>Chest</i><i>Shoulders</i><i>Triceps</i></span></span><span class="peek-food">🍗 Chicken &amp; rice · 🫘 Rajma</span></span>
           <span class="eat">🥡 EAT — batch A</span>
         </button>
         <div class="day-body" id="day-body-1"><div class="day-inner">
@@ -546,7 +561,7 @@
         <button class="day-head" aria-expanded="false" aria-controls="day-body-2">
           <span class="caret">▶</span>
           <span class="day-id"><span class="day-name">Tuesday</span><span class="num">DAY 2</span></span>
-          <span class="peek"><span class="peek-ex">🔙 Pull — back &amp; biceps</span><span class="peek-food">🍚 Chicken &amp; rice · 🍛 Rajma</span></span>
+          <span class="peek"><span class="peek-ex">🔙 Pull<span class="mg"><i>Back</i><i>Biceps</i><i>Rear delts</i></span></span><span class="peek-food">🍚 Chicken &amp; rice · 🍛 Rajma</span></span>
           <span class="eat">🥡 EAT — batch A</span>
         </button>
         <div class="day-body" id="day-body-2"><div class="day-inner">
@@ -598,7 +613,7 @@
         <button class="day-head" aria-expanded="false" aria-controls="day-body-3">
           <span class="caret">▶</span>
           <span class="day-id"><span class="day-name">Wednesday</span><span class="num">DAY 3</span></span>
-          <span class="peek"><span class="peek-ex">🦵 Legs — quad focus</span><span class="peek-food">🥬 Palak paneer · 🐟 Salmon</span></span>
+          <span class="peek"><span class="peek-ex">🦵 Legs<span class="mg"><i>Quads</i><i>Glutes</i><i>Calves</i><i>Core</i></span></span><span class="peek-food">🥬 Palak paneer · 🐟 Salmon</span></span>
           <span class="cook">👨‍🍳 COOK — batch B</span>
         </button>
         <div class="day-body" id="day-body-3"><div class="day-inner">
@@ -651,7 +666,7 @@
         <button class="day-head" aria-expanded="false" aria-controls="day-body-4">
           <span class="caret">▶</span>
           <span class="day-id"><span class="day-name">Thursday</span><span class="num">DAY 4</span></span>
-          <span class="peek"><span class="peek-ex">🙌 Push — shoulder emphasis</span><span class="peek-food">🍲 Palak paneer · 🍽️ Salmon</span></span>
+          <span class="peek"><span class="peek-ex">🙌 Push<span class="mg"><i>Shoulders</i><i>Chest</i><i>Triceps</i></span></span><span class="peek-food">🍲 Palak paneer · 🍽️ Salmon</span></span>
           <span class="eat">🥡 EAT — batch B</span>
         </button>
         <div class="day-body" id="day-body-4"><div class="day-inner">
@@ -703,7 +718,7 @@
         <button class="day-head" aria-expanded="false" aria-controls="day-body-5">
           <span class="caret">▶</span>
           <span class="day-id"><span class="day-name">Friday</span><span class="num">DAY 5</span></span>
-          <span class="peek"><span class="peek-ex">🍑 Legs — posterior chain</span><span class="peek-food">🍜 Chicken keema · 🍳 Egg bhurji</span></span>
+          <span class="peek"><span class="peek-ex">🍑 Legs<span class="mg"><i>Hamstrings</i><i>Glutes</i><i>Calves</i><i>Core</i></span></span><span class="peek-food">🍜 Chicken keema · 🍳 Egg bhurji</span></span>
           <span class="cook">👨‍🍳 COOK — batch C</span>
         </button>
         <div class="day-body" id="day-body-5"><div class="day-inner">
@@ -756,7 +771,7 @@
         <button class="day-head" aria-expanded="false" aria-controls="day-body-6">
           <span class="caret">▶</span>
           <span class="day-id"><span class="day-name">Saturday</span><span class="num">DAY 6</span></span>
-          <span class="peek"><span class="peek-ex">💪 Pull + arms &amp; core</span><span class="peek-food">🌯 Chicken keema · 🍳 Egg bhurji</span></span>
+          <span class="peek"><span class="peek-ex">💪 Pull<span class="mg"><i>Back</i><i>Biceps</i><i>Triceps</i><i>Core</i></span></span><span class="peek-food">🌯 Chicken keema · 🍳 Egg bhurji</span></span>
           <span class="eat">🥡 EAT — batch C</span>
         </button>
         <div class="day-body" id="day-body-6"><div class="day-inner">
