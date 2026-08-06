@@ -329,16 +329,18 @@
 
   /* ---------- shopping list ---------- */
   .shop { margin-top: 26px; }
-  .shop > h2 {
-    margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted);
-  }
+  /* the whole list folds away; the batches fold independently inside it */
+  .shop-inner { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .shop-group .shop-card { margin-bottom: 0; border-radius: 12px; box-shadow: none; }
+  .shop-group .shop-card .day-head { padding: 12px 15px; }
   .shop-card {
     background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--day);
     border-radius: 16px; box-shadow: var(--shadow); overflow: hidden;
     scroll-margin-top: 66px; margin-bottom: 10px;
   }
-  .shop-card.open .day-body { grid-template-rows: 1fr; }
-  .shop-card.open .day-head .caret { transform: rotate(90deg); }
+  /* child combinators, so opening the wrapper doesn't open every batch inside it */
+  .shop-card.open > .day-body { grid-template-rows: 1fr; }
+  .shop-card.open > .day-head .caret { transform: rotate(90deg); }
   .shop-card .day-head { gap: 12px; }
   .shop-count { flex: none; font-size: 12px; font-weight: 700; color: var(--muted); }
   .ref-card { margin-top: 22px; }
@@ -855,7 +857,14 @@
   </div>
 
   <div class="shop">
-    <h2>🛒 Shopping list</h2>
+   <section class="shop-card shop-group" style="--day:#8a8078">
+    <button class="day-head">
+      <span class="caret">▶</span>
+      <span class="day-id"><span class="day-name">🛒 Shopping list</span><span class="num">3 BATCHES + STAPLES</span></span>
+      <span class="peek"><span class="peek-ex">Batch A · B · C</span><span class="peek-food">Tick things off as you shop</span></span>
+      <span class="shop-count"></span>
+    </button>
+    <div class="day-body"><div class="day-inner"><div class="shop-inner">
 
     <section class="shop-card" data-shop="a" style="--day:#17a9a0">
       <button class="day-head">
@@ -946,6 +955,9 @@
         </ul>
       </div></div>
     </section>
+
+    </div></div></div>
+   </section>
   </div>
 
   <section class="shop-card ref-card" style="--day:#8a8078">
@@ -1038,7 +1050,9 @@
   paintHero();
 
   /* ---------------- home-screen install ---------------- */
-  /* icons are drawn here rather than shipped as files, so this stays one HTML file */
+  /* icons are drawn here rather than shipped as files, so this stays one HTML file.
+     the mark is drawn as paths, not an emoji — emoji glyphs don't render reliably
+     in a canvas and iOS ended up with a blank gradient. */
   function appIcon(size, maskable) {
     var c = document.createElement('canvas');
     c.width = c.height = size;
@@ -1048,11 +1062,30 @@
     g.addColorStop(.72, '#9a5ce0'); g.addColorStop(1, '#3aa3d8');
     x.fillStyle = g;
     x.fillRect(0, 0, size, size);
-    x.textAlign = 'center';
-    x.textBaseline = 'middle';
-    // maskable icons get cropped to a circle, so the glyph sits inside the safe zone
-    x.font = Math.round(size * (maskable ? .42 : .56)) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
-    x.fillText('🏋️', size / 2, size * .54);
+
+    // drawn on a 512 grid, then scaled — maskable icons get cropped to a circle,
+    // so they sit further inside the safe zone
+    x.translate(size / 2, size / 2);
+    x.scale(size / 512 * (maskable ? .78 : .92), size / 512 * (maskable ? .78 : .92));
+    x.fillStyle = '#fff';
+
+    // rounded rect centred on the bar's axis — arcTo works everywhere, roundRect doesn't
+    function plate(cx, w, h, r) {
+      var l = cx - w / 2, t = -h / 2;
+      x.beginPath();
+      x.moveTo(l + r, t);
+      x.arcTo(l + w, t, l + w, t + h, r);
+      x.arcTo(l + w, t + h, l, t + h, r);
+      x.arcTo(l, t + h, l, t, r);
+      x.arcTo(l, t, l + w, t, r);
+      x.closePath();
+      x.fill();
+    }
+    plate(0, 250, 34, 17);          // bar
+    plate(-142, 46, 120, 16);       // inner plates
+    plate(142, 46, 120, 16);
+    plate(-182, 34, 76, 13);        // outer plates
+    plate(182, 34, 76, 13);
     return c.toDataURL('image/png');
   }
 
@@ -1334,16 +1367,31 @@
   /* ---------------- shopping list ---------------- */
   var bought = load('bought', {});
 
-  document.querySelectorAll('.shop-card').forEach(function (card) {
+  /* the outer wrapper counts everything inside it but owns no items of its own */
+  var shopGroup = document.querySelector('.shop-group');
+  var groupHead = shopGroup && shopGroup.querySelector('.day-head');   // its own, first in the DOM
+  var groupCount = groupHead && groupHead.querySelector('.shop-count');
+  function refreshGroup() {
+    if (!groupCount) return;
+    var left = 0;
+    shopGroup.querySelectorAll('.buy').forEach(function (b) {
+      if (!b.classList.contains('got')) left++;
+    });
+    groupCount.textContent = left ? left + ' left' : '✓ all done';
+  }
+
+  document.querySelectorAll('.shop-card:not(.shop-group)').forEach(function (card) {
     var group = card.getAttribute('data-shop');
     var count = card.querySelector('.shop-count');
     var head = card.querySelector('.day-head');
     var items = Array.prototype.slice.call(card.querySelectorAll('.buy'));
 
     function refresh() {
-      if (!count) return;
-      var left = items.filter(function (b) { return !b.classList.contains('got'); }).length;
-      count.textContent = left ? left + ' left' : '✓ done';
+      if (count) {
+        var left = items.filter(function (b) { return !b.classList.contains('got'); }).length;
+        count.textContent = left ? left + ' left' : '✓ done';
+      }
+      refreshGroup();
     }
 
     items.forEach(function (btn) {
@@ -1386,6 +1434,16 @@
     });
     refresh();
   });
+
+  if (groupHead) {
+    groupHead.setAttribute('aria-expanded', 'false');
+    groupHead.addEventListener('click', function () {
+      var open = !shopGroup.classList.contains('open');
+      shopGroup.classList.toggle('open', open);
+      groupHead.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    refreshGroup();
+  }
 
   /* ---------------- sticky bar shadow ---------------- */
   var bar = document.querySelector('.daybar');
