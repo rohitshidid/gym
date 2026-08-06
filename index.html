@@ -107,8 +107,9 @@
   .hero-more { position: relative; z-index: 1; display: grid; grid-template-rows: 1fr; transition: grid-template-rows .3s ease; }
   .hero-more > div { overflow: hidden; min-height: 0; }
   :root[data-hero="compact"] .hero-more { grid-template-rows: 0fr; }
-  :root[data-hero="compact"] .hero { padding: 15px 20px; margin-bottom: 16px; }
-  :root[data-hero="compact"] .hero h1 { font-size: 19px; }
+  :root[data-hero="compact"] .hero { padding: 11px 18px; margin: 16px 0 14px; border-radius: 13px; }
+  :root[data-hero="compact"] .hero h1 { font-size: 17px; }
+  :root[data-hero="compact"] .hero-caret { font-size: 11px; }
 
   /* ---------- info strips ---------- */
   .strip {
@@ -366,31 +367,34 @@
     body { padding: 0 12px calc(56px + env(safe-area-inset-bottom)); }
     .hero { margin: 12px 0 14px; padding: 18px 17px; border-radius: 14px; }
     .hero h1 { font-size: 20px; }
-    :root[data-hero="compact"] .hero { padding: 12px 15px; margin-bottom: 12px; }
-    :root[data-hero="compact"] .hero h1 { font-size: 16.5px; }
+    /* collapsed, this is a title bar and nothing more — keep it out of the way */
+    :root[data-hero="compact"] .hero { padding: 9px 13px; margin: 8px 0 10px; border-radius: 11px; }
+    :root[data-hero="compact"] .hero h1 { font-size: 15px; }
     .hero p { font-size: 13px; }
     .hero .emojis { font-size: 21px; margin-top: 10px; letter-spacing: 2px; }
     .strip { grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
     /* an open day doesn't need its own summary repeated back at it */
     .day.open .peek { display: none; }
 
-    .days { gap: 10px; }
-    .day { border-left-width: 5px; }
-    .day-head { padding: 13px 14px; gap: 11px; flex-wrap: wrap; }
+    .days { gap: 8px; }
+    .day { border-left-width: 5px; border-radius: 14px; }
+    /* the bar is shorter now, so a card needs less clearance when it scrolls up */
+    .day, .shop-card { scroll-margin-top: 56px; }
+    .day-head { padding: 11px 13px; gap: 10px; flex-wrap: wrap; }
     .day-id { min-width: 0; flex: 1; }
-    .day-name { font-size: 18px; }
-    .peek { flex-basis: 100%; order: 3; font-size: 12.5px; }
+    .day-name { font-size: 17.5px; }
+    .peek { flex-basis: 100%; order: 3; font-size: 12px; }
     .cook, .eat { order: 2; }
 
     .cells { grid-template-columns: 1fr; }
-    .cell { padding: 13px 15px; border-left: none; border-top: 1px solid var(--line); }
+    .cell { padding: 12px 14px; border-left: none; border-top: 1px solid var(--line); }
     .cell:first-child { border-top: none; }
     .ex { min-height: 58px; font-size: 15px; }
 
     .workout > .detail { padding: 0 15px; }
     .workout.open > .detail { padding: 4px 15px 18px; }
 
-    .daybar { margin: 0 -12px 12px; padding: 7px 10px; }
+    .daybar { margin: 0 -12px 10px; padding: 6px 10px; }
     .daybar-inner { gap: 4px; flex-wrap: wrap; }
     .pill { padding: 8px 2px 9px; border-radius: 11px; }
     .theme-btn { width: 34px; height: 34px; }
